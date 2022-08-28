@@ -2,19 +2,49 @@ extends Node
 
 
 class Administrator:
-	var number = {}
+	var num = {}
+	var arr = {}
+	var obj = {}
 
 	func _init():
-		number.index = Global.number.primary_key.administrator
-		Global.number.primary_key.administrator += 1
+		num.index = Global.num.primary_key.administrator
+		Global.num.primary_key.administrator += 1
+		arr.pack = []
+		arr.goal = []
+		obj.tournament = null
+		obj.lap = null
+		num.grade = 1
+		set_result()
+
+	func set_result():
+		var input = {}
+		input.administrator = self
+		obj.result = Classes.Result.new(input)
+
+	func add_goal():
+		var input = {}
+		input.administrator = self
+		input.grade = num.grade
+		var goal = Classes.Goal.new(input)
+		arr.goal.append(goal)
+
+	func remove_goal(goal_):
+		arr.goal.remove(goal_)
 
 class Result:
-	var number = {}
+	var num = {}
 	var obj = {}
 
 	func _init(input_):
-		number.value = 0
-		obj.parent = input_.parent
+		num.value = 0
+		obj.administrator = input_.administrator
+
+	func calc_value():
+		pass
+
+	func get_value():
+		calc_value()
+		return num.value
 
 class Card:
 	var string = {}
@@ -38,42 +68,49 @@ class Content:
 		obj.owner = owner_
 
 class Lap:
-	var array = {}
+	var arr = {}
 	var obj = {}
 
 	func _init(input_):
-		obj.owner = input_.owner
-		array.administrator = input_.administrator
+		obj.tournament = input_.owner
+		arr.administrator = input_.administrator
 	
 	func start():
+		set_goals()
+		print(arr.administrator[0].arr.pack.size())
 		pass
 
+	func set_goals():
+		for administrator in arr.administrator: 
+			administrator.add_goal()
+
 class Tournament:
-	var array = {}
-	var number = {}
+	var arr = {}
+	var num = {}
 
 	func _init():
-		array.administrator = []
-		array.lap = []
-		number.lap = 1
+		arr.administrator = []
+		arr.lap = []
+		num.lap = 1
 
 	func add_administrator(administrator_):
-		array.administrator.append(administrator_)
+		arr.administrator.append(administrator_)
+		administrator_.obj.tournament = self
 
 	func start_preparation():
-		for administrator in array.administrator:
+		for administrator in arr.administrator:
 			var input = {}
 			input.tournament = self
 			input.administrator = administrator
 			var preparation = Classes.Preparation.new(input)
 
 	func start_laps():
-		for _i in number.lap:
+		for _i in num.lap:
 			var input = {}
 			input.owner = self
-			input.administrator = array.administrator.duplicate(true) 
+			input.administrator = arr.administrator.duplicate(true) 
 			var lap = Classes.Lap.new(input)
-			array.lap.append(lap)
+			arr.lap.append(lap)
 			lap.start()
 
 	func start():
@@ -81,97 +118,170 @@ class Tournament:
 		start_laps()
 
 class Preparation:
-	var array = {}
+	var arr = {}
 	var obj = {}
-	var number = {}
+	var num = {}
 
 	func _init(input_):
 		obj.tournament = input_.tournament
 		obj.administrator = input_.administrator
-		number.total = Global.number.pack.total
-		
+		num.total = Global.num.pack.total
 		create_packs()
 
 	func create_packs():
-		while number.total > 0:
-			var total = number.total
+		obj.administrator.arr.pack = []
+		
+		while num.total > 0:
+			var total = num.total
 			
-			if total > Global.number.pack.avg + Global.array.pack.shift.back():
-				total = Global.number.pack.avg 
+			if total > Global.num.pack.avg + Global.arr.pack.shift.back():
+				total = Global.num.pack.avg 
 				var options = []
 				
-				for _i in Global.array.pack.shift.size():
-					for _j in Global.array.pack.rarity[_i]:
-						options.append(Global.array.pack.shift[_i])
-						
+				for _i in Global.arr.pack.shift.size():
+					for _j in Global.arr.pack.rarity[_i]:
+						options.append(Global.arr.pack.shift[_i])
+				
 				Global.rng.randomize()
 				var index_r = Global.rng.randi_range(0, options.size()-1)
 				total += options[index_r]
 			
 			var packs = []
 			
-			for _i in Global.number.pack.pool:
-				var input = {}
-				input.total = total
-				input.type = "digit"
-				var pack = Classes.Pack.new(input)
+			for _i in Global.num.pack.pool:
+				packs.append([])
+				
+				for _j in Global.num.pack.size:
+					var input = {}
+					input.total = total
+					input.type = "digit"
+					var pack = Classes.Pack.new(input)
+					packs[_i].append(pack)
 			
-			number.total -= total
-			print(number.total)
+			choose_pack(packs)
+			num.total -= total
+
+	func choose_pack(packs_):
+		var pack = packs_[0]
+		obj.administrator.arr.pack.append_array(pack)
 
 class Pack:
-	var number = {}
-	var array = {}
+	var num = {}
+	var arr = {}
 	var string = {}
 	
 	func _init(input_):
-		number.total = input_.total
-		number.current = input_.total
+		num.total = input_.total
+		num.current = input_.total
 		string.type = input_.type
-		array.content = []
+		arr.content = []
 		generate()
 		calc_dispersion()
 	
 	func generate():
 		match string.type:
 			"digit":
-				for _i in Global.number.pack.size:
+				for _i in Global.num.pack.size:
 					var input = {}
 					input.value = 1
 					input.type = string.type
 					var content = Classes.Content.new(input)
-					array.content.append(content)
-					number.current -= input.value
+					arr.content.append(content)
+					num.current -= input.value
 				
 				var step = 1
 				
-				while number.current > 0:
+				while num.current > 0:
 					var options = []
-					for content in array.content:
-						if int(content.string.value) < Global.number.pack.max:
+					for content in arr.content:
+						if int(content.string.value) < Global.num.pack.max:
 							options.append(content)
 					
 					Global.rng.randomize()
 					var index_r = Global.rng.randi_range(0, options.size()-1)
 					options[index_r].add_to_value(step)
-					number.current -= step
+					num.current -= step
 				
-				if number.current != 0:
+				if num.current != 0:
 					print("pack error -> generate() -> current != 0")
-				
 
 	func calc_dispersion():
-		number.dispersion = 0
-		number.avg = float(number.total)/float(array.content.size())
+		num.dispersion = 0
+		num.avg = float(num.total)/float(arr.content.size())
 		
-		for content in array.content: 
-			var deviation = number.avg - int(content.string.value)
-			number.dispersion += pow(deviation,2)/array.content.size()
+		for content in arr.content: 
+			var deviation = num.avg - int(content.string.value)
+			num.dispersion += pow(deviation,2)/arr.content.size()
 		
-		var arr = []
-		for content in array.content:
-			arr.append(content.string.value)
-		print(arr,number.dispersion)
+#		var arr = []
+#		for content in arr.content:
+#			arr.append(content.string.value)
+#		print(arr,num.dispersion)
+		pass
+
+class Goal:
+	var num = {}
+	var arr = {}
+	var obj = {}
+	var flag = {}
+
+	func _init(input_):
+		obj.administrator = input_.administrator
+		num.grade = input_.grade
+		num.cols = input_.grade
+		num.rows = input_.grade
+		arr.target = []
+		flag.fill = false
+		generate()
+
+	func generate():
+		var options = []
+		var anchors = []
+		var tournament = obj.administrator.obj.tournament
+		
+		for administrator in tournament.arr.administrator:
+			var anchor = administrator.obj.result.get_value()
+			anchors.append(anchor)
+		
+		print(anchors)
+		
+		for anchor in anchors:
+			var scales = [1,-1]
+			var values = []
+			
+			for scale in scales:
+				var a = anchor + (Global.num.goal.shift.min + num.grade) * scale
+				var b = a + (Global.num.goal.shift.d + num.grade) * scale
+				var min_ = min(a,b)
+				var max_ = max(a,b)
+				
+				for value in range(min_,max_):
+					values.append(value)
+			
+			print(values)
+		
+
+	func filling_check():
+		flag.fill = true
+		
+		for targets in arr.target:
+			for target in targets:
+				flag.fill = flag.fill && target.flag.realised
+				
+
+class Target:
+	var num = {}
+	var flag = {}
+	var obj = {}
+
+	func _init(input_):
+		obj.goal = input_.goal
+		num.value = input_.value
+		flag.realised = false
+
+	func check(value_):
+		if !flag.realised:
+			flag.realised = num.value == value_
 
 class Sorter:
     static func sort_ascending(a, b):

@@ -3,12 +3,12 @@ extends Node
 func init_administrators():
 	for _i in 1:
 		var administrator = Classes.Administrator.new()
-		Global.array.administrator.append(administrator)
+		Global.arr.administrator.append(administrator)
 
 func init_tournament():
 	Global.obj.tournament = Classes.Tournament.new()
 	
-	for administrator in Global.array.administrator:
+	for administrator in Global.arr.administrator:
 		Global.obj.tournament.add_administrator(administrator)
 		
 	Global.obj.tournament.start()
